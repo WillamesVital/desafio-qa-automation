@@ -1,0 +1,29 @@
+{
+  "name": "desafio-qa-automation",
+  "version": "1.0.0",
+  "description": "Desafio técnico de automação de testes com Playwright - Testes Web e API para DemoQA",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:web": "playwright test tests/web",
+    "test:api": "playwright test tests/api",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "test:ui": "playwright test --ui"
+  },
+  "keywords": [
+    "playwright",
+    "automation",
+    "testing",
+    "qa",
+    "demoqa"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.8.1",
+    "typescript": "^5.9.3"
+  }
+}
