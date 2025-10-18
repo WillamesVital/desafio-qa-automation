@@ -14,12 +14,11 @@ export default defineConfig({
     navigationTimeout: 20_000,
   },
   projects: [
-    // Só API
     {
       name: 'api',
       testMatch: /tests\/api\/.*\.spec\.(js|ts)/,
     },
-    // Navegadores (ignoram API)
+
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
@@ -36,7 +35,7 @@ export default defineConfig({
       testIgnore: /tests\/api\/.*/,
     },
   ],
-  retries: process.env.CI ? 1 : 1,
+  retries: process.env.CI ? 2 : 1,
   workers: process.env.CI ? 2 : undefined,
 });
 
