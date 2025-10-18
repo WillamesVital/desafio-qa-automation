@@ -9,6 +9,22 @@ test.describe('DemoQA API - cenários negativos', () => {
   let bookstore;
   const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
+  const retryRequest = async (fn, { maxRetries = 5, baseDelay = 1000 } = {}) => {
+    let lastStatus;
+    for (let i = 0; i < maxRetries; i++) {
+      const res = await fn();
+      lastStatus = res.status();
+      if (lastStatus < 500) {
+        return { res, lastStatus };
+      }
+      // backoff exponencial com jitter
+      const jitter = Math.floor(Math.random() * 300);
+      const delay = baseDelay * Math.pow(2, i) + jitter;
+      await sleep(delay);
+    }
+    return { res: null, lastStatus };
+  };
+
   test.beforeAll(async () => {
     apiCtx = await apiRequest.newContext();
     account = new AccountClient(apiCtx);
@@ -69,40 +85,23 @@ test.describe('DemoQA API - cenários negativos', () => {
     const password = 'Str0ng@Pwd1';
 
     await test.step('Given que tenho um usuário válido com token', async () => {
-      let lastStatus;
-      for (let i = 0; i < 3; i++) {
-        const create = await account.createUser({ userName: username, password });
-        lastStatus = create.status();
-        if (lastStatus === 201) {
-          userId = (await create.json()).userID;
-          break;
-        }
-        if (lastStatus >= 500) {
-          await sleep(500 * (i + 1));
-          continue;
-        }
-        expect(create.status(), await create.text()).toBe(201);
+      const { res: create, lastStatus: createStatus } = await retryRequest(
+        () => account.createUser({ userName: username, password })
+      );
+      if (!create || createStatus !== 201) {
+        if (create) await testInfo.attach('create-user-response.txt', { body: await create.text(), contentType: 'text/plain' });
+        throw new Error(`Falha ao criar usuário após retries. Último status: ${createStatus}`);
       }
-      if (!userId) {
-        throw new Error(`Falha ao criar usuário após retries. Último status: ${lastStatus}`);
-      }
+      userId = (await create.json()).userID;
 
-      for (let i = 0; i < 3; i++) {
-        const genTok = await account.generateToken({ userName: username, password });
-        lastStatus = genTok.status();
-        if (lastStatus === 200) {
-          token = (await genTok.json()).token;
-          break;
-        }
-        if (lastStatus >= 500) {
-          await sleep(500 * (i + 1));
-          continue;
-        }
-        expect(genTok.status(), await genTok.text()).toBe(200);
+      const { res: genTok, lastStatus: tokenStatus } = await retryRequest(
+        () => account.generateToken({ userName: username, password })
+      );
+      if (!genTok || tokenStatus !== 200) {
+        if (genTok) await testInfo.attach('generate-token-response.txt', { body: await genTok.text(), contentType: 'text/plain' });
+        throw new Error(`Falha ao gerar token após retries. Último status: ${tokenStatus}`);
       }
-      if (!token) {
-        throw new Error(`Falha ao gerar token após retries. Último status: ${lastStatus}`);
-      }
+      token = (await genTok.json()).token;
     });
 
     await test.step('When tento adicionar um ISBN inválido', async () => {
