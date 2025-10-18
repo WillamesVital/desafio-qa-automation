@@ -10,4 +10,8 @@ export class HomePage {
   async openForms() {
     await this.page.locator('div.card.mt-4.top-card:has-text("Forms")').click();
   }
+
+  async openAlertsFrameWindows() {
+    await this.page.locator('div.card.mt-4.top-card:has-text("Alerts, Frame & Windows")').click();
+  }
 }

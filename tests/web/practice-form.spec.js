@@ -8,14 +8,15 @@ test('Forms > Practice Form - preencher e submeter com popup', async ({ page, br
   const home = new HomePage(page);
   const form = new PracticeFormPage(page);
 
-  // 1) Acessar o site e abrir Forms
-  await home.goto();
-  await home.openForms();
+  await test.step('Given que acesso a página inicial e abro a seção Forms', async () => {
+    await home.goto();
+    await home.openForms();
+  });
 
-  // 2) Navegar direto ao Practice Form (sub-menu)
-  await form.goto();
+  await test.step('When navego até "Practice Form"', async () => {
+    await form.goto();
+  });
 
-  // 3) Preencher dados com valores aleatórios
   const data = {
     firstName: genFirstName(),
     lastName: genLastName(),
@@ -31,22 +32,28 @@ test('Forms > Practice Form - preencher e submeter com popup', async ({ page, br
     city: 'Delhi',
   };
 
-  await form.fillForm(data);
+  await test.step('And preencho o formulário com dados válidos', async () => {
+    await form.fillForm(data);
+  });
 
-  const originalViewport = page.viewportSize();
-  if (browserName === 'chromium') {
-    const w = originalViewport?.width ?? 1280;
-    const h = originalViewport?.height ?? 720;
-    await page.setViewportSize({ width: w, height: h + 300 });
-  } else {
-    await page.evaluate(() => { document.body.style.zoom = '70%'; });
-  }
+  await test.step('And aplico o workaround de viewport/zoom para garantir o clique no Submit', async () => {
+    const originalViewport = page.viewportSize();
+    if (browserName === 'chromium') {
+      const w = originalViewport?.width ?? 1280;
+      const h = originalViewport?.height ?? 720;
+      await page.setViewportSize({ width: w, height: h + 300 });
+    } else {
+      await page.evaluate(() => { document.body.style.zoom = '70%'; });
+    }
+  });
 
-  await form.submit({ timeout: 5000 });
+  await test.step('Then eu submeto o formulário e devo ver o popup de sucesso', async () => {
+    await form.submit({ timeout: 5000 });
+    await expect(await form.isPopupVisible()).toBeTruthy();
+    await expect(page.locator('#example-modal-sizes-title-lg')).toContainText('Thanks for submitting the form');
+  });
 
-  await expect(await form.isPopupVisible()).toBeTruthy();
-
-  await expect(page.locator('#example-modal-sizes-title-lg')).toContainText('Thanks for submitting the form');
-
-  await form.closePopup();
+  await test.step('And eu fecho o popup de confirmação', async () => {
+    await form.closePopup();
+  });
 });

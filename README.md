@@ -39,7 +39,9 @@ npm run test:report
 
 - `tests/`
 	- `example.spec.js`: Exemplo básico gerado pelo Playwright.
-	- `web/`: Pasta reservada para futuros testes Web (POM já disponível em `pages/`).
+	- `web/`: Testes Web (POM em `pages/`).
+		- `practice-form.spec.js`: Fluxo completo do formulário de prática (preencher, submeter, validar popup e fechar).
+		- `browser-windows.spec.js`: Abrir página "Browser Windows", clicar em "New Window", validar o texto "This is a sample page" na nova janela e fechá-la.
 	- `api/`
 		- `demoqa-account-bookstore.spec.js`: Teste de API end-to-end que cobre o fluxo na DemoQA:
 			1) Criar usuário (`POST /Account/v1/User`)
@@ -154,3 +156,80 @@ Decisão neste projeto: usar a abordagem A (Zoom/Viewport) no teste web para est
 
 Observação importante (caso real):
 - Em um produto real, essa situação seria reportada como bug de usabilidade/UX (botão crítico encoberto por ads/overlays). O workaround é apenas para a página pública de demonstração e não substitui a correção de UI.
+
+## Testes Web – Browser Windows (DemoQA)
+
+Arquivo: `tests/web/browser-windows.spec.js`
+
+Fluxo coberto:
+- Acessar https://demoqa.com/
+- Entrar em "Alerts, Frame & Windows"
+- Abrir "Browser Windows" (https://demoqa.com/browser-windows)
+- Clicar em "New Window" e capturar a nova janela
+- Validar que a nova janela exibe o texto "This is a sample page"
+- Fechar a nova janela
+
+Páginas usadas (POM):
+- `pages/HomePage.js` — acessa o site e abre a seção "Alerts, Frame & Windows"
+- `pages/Windows/BrowserWindowsPage.js` — abre a página Browser Windows e lida com a nova janela
+
+## Padrão de passos com test.step (Gherkin)
+
+Os testes adotam `test.step` do Playwright para descrever ações e expectativas em passos no estilo Gherkin (Given/When/Then/And). Benefícios:
+- Relatórios mais legíveis, com cada etapa explicitada
+- Padronização sem introduzir dependência de BDD externo
+- Facilita troubleshooting ao saber em qual passo falhou
+
+Exemplo (Web):
+
+```js
+import { test, expect } from '@playwright/test';
+
+test('Exemplo Web com steps', async ({ page }) => {
+	await test.step('Given que acesso a home', async () => {
+		await page.goto('https://demoqa.com/');
+	});
+
+	await test.step('When navego até Forms', async () => {
+		await page.getByText('Forms').click();
+	});
+
+	await test.step('Then devo ver a seção de Practice Form', async () => {
+		await expect(page.getByText('Practice Form')).toBeVisible();
+	});
+});
+```
+
+Exemplo (API):
+
+```js
+import { test, expect, request } from '@playwright/test';
+
+test('Exemplo API com steps', async () => {
+	const api = await request.newContext();
+	let userId, token;
+
+	await test.step('Given que crio um usuário válido', async () => {
+		const res = await api.post('/Account/v1/User', { data: { userName: 'u', password: 'P@ssw0rd!' } });
+		expect(res.status()).toBe(201);
+		userId = (await res.json()).userID;
+	});
+
+	await test.step('When gero um token', async () => {
+		const res = await api.post('/Account/v1/GenerateToken', { data: { userName: 'u', password: 'P@ssw0rd!' } });
+		expect(res.status()).toBe(200);
+		token = (await res.json()).token;
+	});
+
+	await test.step('Then o usuário deve estar autorizado', async () => {
+		const res = await api.post('/Account/v1/Authorized', { data: { userName: 'u', password: 'P@ssw0rd!' } });
+		expect(res.status()).toBe(200);
+		expect(await res.json()).toBe(true);
+	});
+});
+```
+
+Uso no projeto:
+- `tests/web/practice-form.spec.js`: passos Gherkin para navegação, preenchimento, workaround (zoom/viewport), submit, verificação e fechamento do popup.
+- `tests/web/browser-windows.spec.js`: passos Gherkin para navegação, abertura de nova janela, validação de texto e fechamento.
+- `tests/api/demoqa-account-bookstore.spec.js`: passos Gherkin cobrindo criação de usuário, geração de token, autorização, listagem e adição de livros, e verificação final do usuário.

@@ -55,72 +55,85 @@ test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
   });
 
   test('criar usuário', async () => {
-    username = genUsername();
-    // Senha precisa cumprir política (letra maiúscula, minúscula, número e caractere especial, min 8)
-    password = genValidPassword();
+    await test.step('Given que eu gere um username e password válidos', async () => {
+      username = genUsername();
+      // Senha precisa cumprir política (letra maiúscula, minúscula, número e caractere especial, min 8)
+      password = genValidPassword();
+    });
 
-  const res = await accountClient.createUser({ userName: username, password });
-
-    expect(res.status(), await res.text()).toBe(201);
-    const body = await res.json();
-    expect(body.username).toBe(username);
-    expect(body.userID).toMatch(/[0-9a-fA-F-]{36}/);
-    userId = body.userID;
+    await test.step('When eu requisito a criação do usuário', async () => {
+      const res = await accountClient.createUser({ userName: username, password });
+      expect(res.status(), await res.text()).toBe(201);
+      const body = await res.json();
+      expect(body.username).toBe(username);
+      expect(body.userID).toMatch(/[0-9a-fA-F-]{36}/);
+      userId = body.userID;
+    });
   });
 
   test('gerar token', async () => {
-    const res = await accountClient.generateToken({ userName: username, password });
-    expect(res.status(), await res.text()).toBe(200);
-    const body = await res.json();
-    expect(body.status).toBe('Success');
-    expect(body.token).toBeTruthy();
-    token = body.token;
+    await test.step('When eu gero um token para o usuário criado', async () => {
+      const res = await accountClient.generateToken({ userName: username, password });
+      expect(res.status(), await res.text()).toBe(200);
+      const body = await res.json();
+      expect(body.status).toBe('Success');
+      expect(body.token).toBeTruthy();
+      token = body.token;
+    });
   });
 
   test('confirmar usuário autorizado', async () => {
-    const res = await accountClient.isAuthorized({ userName: username, password });
-    expect(res.status(), await res.text()).toBe(200);
-    const isAuthorized = await res.json();
-    expect(isAuthorized).toBe(true);
+    await test.step('Then o usuário deve estar autorizado', async () => {
+      const res = await accountClient.isAuthorized({ userName: username, password });
+      expect(res.status(), await res.text()).toBe(200);
+      const isAuthorized = await res.json();
+      expect(isAuthorized).toBe(true);
+    });
   });
 
   test('listar livros disponíveis', async () => {
-  const res = await bookClient.listBooks();
-    expect(res.status(), await res.text()).toBe(200);
-    const body = await res.json();
-    expect(Array.isArray(body.books)).toBe(true);
-    expect(body.books.length).toBeGreaterThanOrEqual(2);
+    await test.step('When eu listo os livros disponíveis', async () => {
+      const res = await bookClient.listBooks();
+      expect(res.status(), await res.text()).toBe(200);
+      const body = await res.json();
+      expect(Array.isArray(body.books)).toBe(true);
+      expect(body.books.length).toBeGreaterThanOrEqual(2);
 
-    availableBooks = body.books
-      .slice(0, 2)
-      .map(b => ({ isbn: b.isbn, title: b.title }));
+      availableBooks = body.books
+        .slice(0, 2)
+        .map(b => ({ isbn: b.isbn, title: b.title }));
+    });
   });
 
   test('adicionar dois livros ao usuário', async () => {
-    const res = await bookClient.addBooks(
-      userId,
-      token,
-      availableBooks.map(b => ({ isbn: b.isbn }))
-    );
+    await test.step('And eu adiciono dois livros à coleção do usuário', async () => {
+      const res = await bookClient.addBooks(
+        userId,
+        token,
+        availableBooks.map(b => ({ isbn: b.isbn }))
+      );
 
-    expect([200, 201]).toContain(res.status());
-    const body = await res.json();
-    // Quando já existem, a API pode retornar uma lista dos livros ou mensagem de conflito;
-    // validei que não é erro 401/403/400 e segui a verificação final no GET do usuário.
-    expect(res.status()).not.toBeGreaterThan(400);
+      expect([200, 201]).toContain(res.status());
+      const body = await res.json();
+      // Quando já existem, a API pode retornar uma lista dos livros ou mensagem de conflito;
+      // validei que não é erro 401/403/400 e segui a verificação final no GET do usuário.
+      expect(res.status()).not.toBeGreaterThan(400);
+    });
   });
 
   test('detalhar usuário com livros escolhidos', async () => {
-    const res = await accountClient.getUser(userId, token);
-    expect(res.status(), await res.text()).toBe(200);
-    const body = await res.json();
+    await test.step('Then os detalhes do usuário devem conter os livros adicionados', async () => {
+      const res = await accountClient.getUser(userId, token);
+      expect(res.status(), await res.text()).toBe(200);
+      const body = await res.json();
 
-    expect(body.username).toBe(username);
-    expect(Array.isArray(body.books)).toBe(true);
+      expect(body.username).toBe(username);
+      expect(Array.isArray(body.books)).toBe(true);
 
-    const userIsbns = new Set(body.books.map(b => b.isbn));
-    for (const book of availableBooks) {
-      expect(userIsbns.has(book.isbn), `Livro ausente: ${book.title} (${book.isbn})`).toBe(true);
-    }
+      const userIsbns = new Set(body.books.map(b => b.isbn));
+      for (const book of availableBooks) {
+        expect(userIsbns.has(book.isbn), `Livro ausente: ${book.title} (${book.isbn})`).toBe(true);
+      }
+    });
   });
 });
