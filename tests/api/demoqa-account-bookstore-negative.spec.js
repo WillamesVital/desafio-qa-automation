@@ -2,11 +2,19 @@ import { test, expect, request as apiRequest } from '@playwright/test';
 import { AccountClient, BookStoreClient } from '../../helpers/apiClient.js';
 import { genUsername } from '../../helpers/dataFactory.js';
 
+/*
+Cenários negativos com observabilidade:
+- senha fraca -> 400 e mensagem
+- gerar token inválido -> 200 com status Failed
+- authorized usuário inexistente -> 200 (false) ou 404
+- adicionar ISBN inválido -> 400 com mensagem
+*/
+
 test.describe('DemoQA API - cenários negativos', () => {
   let apiCtx;
   let account;
   let bookstore;
-  const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+  const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
   test.beforeAll(async () => {
     apiCtx = await apiRequest.newContext();
@@ -18,34 +26,41 @@ test.describe('DemoQA API - cenários negativos', () => {
     await apiCtx.dispose();
   });
 
-  test('senha fraca ao criar usuário -> 400 e mensagem', async () => {
+  test('senha fraca ao criar usuário -> 400 e mensagem', async ({}, testInfo) => {
     const username = genUsername();
     const weakPassword = 'abc123';
 
     await test.step('When tento criar usuário com senha fraca', async () => {
       const res = await account.createUser({ userName: username, password: weakPassword });
+      if (res.status() !== 400) {
+        await testInfo.attach('weak-password-response.txt', { body: await res.text(), contentType: 'text/plain' });
+      }
       expect(res.status()).toBe(400);
       const body = await res.json();
-      
       expect(body.message || body.Message).toMatch(/password/i);
     });
   });
 
-  test('gerar token com credenciais inválidas -> 200 com status Failed', async () => {
+  test('gerar token com credenciais inválidas -> 200 com status Failed', async ({}, testInfo) => {
     await test.step('When tento gerar token com credenciais inválidas', async () => {
       const res = await account.generateToken({ userName: 'nonexistent_user', password: 'Wrong@123' });
+      if (res.status() !== 200) {
+        await testInfo.attach('invalid-token-response.txt', { body: await res.text(), contentType: 'text/plain' });
+      }
       expect(res.status()).toBe(200);
       const body = await res.json();
-      // DemoQA retorna 200 com { status: 'Failed', result: 'User authorization failed.' }
       expect(body.status).toMatch(/failed/i);
       if (body.result) expect(body.result).toMatch(/authorization failed/i);
     });
   });
 
-  test('authorized com user inexistente -> false/404', async () => {
+  test('authorized com user inexistente -> false/404', async ({}, testInfo) => {
     await test.step('When verifico autorização de usuário inexistente', async () => {
       const res = await account.isAuthorized({ userName: 'ghost_user', password: 'Ghost@1234' });
       const status = res.status();
+      if (![200, 404].includes(status)) {
+        await testInfo.attach('authorized-nonexistent-user.txt', { body: await res.text(), contentType: 'text/plain' });
+      }
       expect([200, 404]).toContain(status);
       if (status === 200) {
         const isAuth = await res.json();
@@ -54,15 +69,13 @@ test.describe('DemoQA API - cenários negativos', () => {
     });
   });
 
-  test('adicionar livro com ISBN inválido -> 400 com mensagem', async () => {
+  test('adicionar livro com ISBN inválido -> 400 com mensagem', async ({}, testInfo) => {
     let token;
     let userId;
     const username = genUsername();
     const password = 'Str0ng@Pwd1';
 
-
     await test.step('Given que tenho um usuário válido com token', async () => {
-    
       let lastStatus;
       for (let i = 0; i < 3; i++) {
         const create = await account.createUser({ userName: username, password });
@@ -99,9 +112,11 @@ test.describe('DemoQA API - cenários negativos', () => {
       }
     });
 
-   
     await test.step('When tento adicionar um ISBN inválido', async () => {
       const res = await bookstore.addBooks(userId, token, [{ isbn: 'INVALID-ISBN-123' }]);
+      if (res.status() !== 400) {
+        await testInfo.attach('invalid-isbn-response.txt', { body: await res.text(), contentType: 'text/plain' });
+      }
       expect(res.status(), await res.text()).toBe(400);
       const body = await res.json().catch(() => ({}));
       if (body.message) expect(body.message).toMatch(/isbn.*not available/i);

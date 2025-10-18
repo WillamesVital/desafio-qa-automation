@@ -16,4 +16,12 @@ export class HomePage {
   async openAlertsFrameWindows() {
     await this.page.locator('div.card.mt-4.top-card:has-text("Alerts, Frame & Windows")').click();
   }
+
+  async openElements() {
+    await this.page.locator('div.card.mt-4.top-card:has-text("Elements")').click();
+  }
+
+  async openWidgets() {
+    await this.page.locator('div.card.mt-4.top-card:has-text("Widgets")').click();
+  }
 }

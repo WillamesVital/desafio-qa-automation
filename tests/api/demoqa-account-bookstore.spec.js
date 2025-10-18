@@ -39,6 +39,10 @@ test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
       const del = await accountClient.deleteUser(userId, token);
       // Aceita 200/204/202 conforme variação da API
       if (![200, 202, 204].includes(del.status())) {
+        await testInfo.attach('cleanup-delete-user-response.txt', {
+          body: await del.text().catch(() => ''),
+          contentType: 'text/plain'
+        });
         console.warn(`Falha ao deletar usuário ${userId}: ${del.status()} - ${await del.text()}`);
       }
     }
@@ -62,7 +66,11 @@ test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
 
     await test.step('When eu requisito a criação do usuário', async () => {
       const res = await accountClient.createUser({ userName: username, password });
-      expect(res.status(), await res.text()).toBe(201);
+      const status = res.status();
+      if (status !== 201) {
+        await testInfo.attach('create-user-response.txt', { body: await res.text(), contentType: 'text/plain' });
+      }
+      expect(status, await res.text()).toBe(201);
       const body = await res.json();
       expect(body.username).toBe(username);
       expect(body.userID).toMatch(/[0-9a-fA-F-]{36}/);
@@ -73,7 +81,11 @@ test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
   test('gerar token', async () => {
     await test.step('When eu gero um token para o usuário criado', async () => {
       const res = await accountClient.generateToken({ userName: username, password });
-      expect(res.status(), await res.text()).toBe(200);
+      const status = res.status();
+      if (status !== 200) {
+        await testInfo.attach('generate-token-response.txt', { body: await res.text(), contentType: 'text/plain' });
+      }
+      expect(status, await res.text()).toBe(200);
       const body = await res.json();
       expect(body.status).toBe('Success');
       expect(body.token).toBeTruthy();
@@ -84,7 +96,11 @@ test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
   test('confirmar usuário autorizado', async () => {
     await test.step('Then o usuário deve estar autorizado', async () => {
       const res = await accountClient.isAuthorized({ userName: username, password });
-      expect(res.status(), await res.text()).toBe(200);
+      const status = res.status();
+      if (status !== 200) {
+        await testInfo.attach('authorized-response.txt', { body: await res.text(), contentType: 'text/plain' });
+      }
+      expect(status, await res.text()).toBe(200);
       const isAuthorized = await res.json();
       expect(isAuthorized).toBe(true);
     });
@@ -93,7 +109,11 @@ test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
   test('listar livros disponíveis', async () => {
     await test.step('When eu listo os livros disponíveis', async () => {
       const res = await bookClient.listBooks();
-      expect(res.status(), await res.text()).toBe(200);
+      const status = res.status();
+      if (status !== 200) {
+        await testInfo.attach('list-books-response.txt', { body: await res.text(), contentType: 'text/plain' });
+      }
+      expect(status, await res.text()).toBe(200);
       const body = await res.json();
       expect(Array.isArray(body.books)).toBe(true);
       expect(body.books.length).toBeGreaterThanOrEqual(2);
@@ -112,7 +132,11 @@ test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
         availableBooks.map(b => ({ isbn: b.isbn }))
       );
 
-      expect([200, 201]).toContain(res.status());
+      const status = res.status();
+      if (![200, 201].includes(status)) {
+        await testInfo.attach('add-books-response.txt', { body: await res.text(), contentType: 'text/plain' });
+      }
+      expect([200, 201]).toContain(status);
       const body = await res.json();
       // Quando já existem, a API pode retornar uma lista dos livros ou mensagem de conflito;
       // validei que não é erro 401/403/400 e segui a verificação final no GET do usuário.
@@ -123,7 +147,11 @@ test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
   test('detalhar usuário com livros escolhidos', async () => {
     await test.step('Then os detalhes do usuário devem conter os livros adicionados', async () => {
       const res = await accountClient.getUser(userId, token);
-      expect(res.status(), await res.text()).toBe(200);
+      const status = res.status();
+      if (status !== 200) {
+        await testInfo.attach('get-user-response.txt', { body: await res.text(), contentType: 'text/plain' });
+      }
+      expect(status, await res.text()).toBe(200);
       const body = await res.json();
 
       expect(body.username).toBe(username);

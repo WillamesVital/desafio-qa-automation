@@ -42,6 +42,8 @@ npm run test:report
 	- `web/`: Testes Web (POM em `pages/`).
 		- `practice-form.spec.js`: Fluxo completo do formulário de prática (preencher, submeter, validar popup e fechar).
 		- `browser-windows.spec.js`: Abrir página "Browser Windows", clicar em "New Window", validar o texto "This is a sample page" na nova janela e fechá-la.
+		- `web-tables.spec.js`: Fluxo de Web Tables (criar, editar e deletar registro) e bônus de criar 12 registros dinamicamente e deletá-los.
+		- `widgets-progress-bar.spec.js`: Fluxo de Widgets > Progress Bar (iniciar, parar ≤25%, completar e resetar).
 	- `api/`
 		- `demoqa-account-bookstore.spec.js`: Teste de API end-to-end que cobre o fluxo na DemoQA:
 			1) Criar usuário (`POST /Account/v1/User`)
@@ -172,6 +174,49 @@ Fluxo coberto:
 Páginas usadas (POM):
 - `pages/HomePage.js` — acessa o site e abre a seção "Alerts, Frame & Windows"
 - `pages/Windows/BrowserWindowsPage.js` — abre a página Browser Windows e lida com a nova janela
+
+## Testes Web – Web Tables (DemoQA)
+
+Arquivo: `tests/web/web-tables.spec.js`
+
+Fluxo coberto:
+- Acessar https://demoqa.com/
+- Entrar em "Elements"
+- Abrir "Web Tables" (https://demoqa.com/webtables)
+- Criar um novo registro
+- Editar o registro criado
+- Deletar o registro criado
+
+Bônus (data-driven):
+- Criar 12 novos registros dinamicamente
+- Validar que todos existem
+- Deletar todos os criados
+
+Páginas usadas (POM):
+- `pages/HomePage.js` — acessa o site e abre a seção "Elements"
+- `pages/Elements/WebTablesPage.js` — navega à página de Web Tables, cria/edita/deleta registros
+
+## Testes Web – Widgets > Progress Bar (DemoQA)
+
+Arquivo: `tests/web/widgets-progress-bar.spec.js`
+
+Fluxo coberto:
+- Acessar https://demoqa.com/
+- Entrar em "Widgets"
+- Abrir "Progress Bar" (https://demoqa.com/progress-bar)
+- Clicar em Start
+- Parar a barra antes dos 25%
+- Validar que o valor da progress bar é menor ou igual a 25%
+- Clicar Start novamente, aguardar chegar a 100% e então clicar em Reset
+
+Páginas usadas (POM):
+- `pages/HomePage.js` — acessa o site e abre a seção "Widgets"
+- `pages/Widgets/ProgressBarPage.js` — navega à página de Progress Bar, inicia/para, lê o valor e reseta
+
+Notas técnicas:
+- O valor é lido de `#progressBar .progress-bar` via `aria-valuenow` (fallback para o texto, ex.: "6%").
+- Para reduzir flakiness, o teste aguarda o valor atingir pelo menos 10% antes de pausar, garantindo que a verificação `≤ 25%` seja consistente.
+- Navegação resiliente (`robustGoto`) e bloqueio de anúncios (`setupAdBlock`) ajudam a mitigar instabilidades do site público.
 
 ### Instabilidade conhecida: 502 Bad Gateway (DemoQA)
 

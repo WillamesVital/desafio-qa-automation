@@ -6,7 +6,8 @@
   "scripts": {
     "test": "playwright test",
     "test:ui": "playwright test --ui",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "test:report-api": "playwright test --project=api --reporter=list"
   },
   "repository": {
     "type": "git",
