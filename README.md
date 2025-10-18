@@ -341,8 +341,3 @@ Como reproduzir localmente os mesmos comandos do CI:
 	- `npx playwright test --project=chromium --project=firefox --project=webkit`
 - Abrir relatório local após uma execução:
 	- `npx playwright show-report`
-
-Notas e melhorias possíveis:
-- É possível paralelizar totalmente removendo a dependência do job Web sobre o API (`needs: api-tests`), caso deseje executar ambos em paralelo.
-- Se necessário, você pode adicionar cache de `node_modules`/Playwright com `actions/cache` para acelerar as execuções.
-- Os testes utilizam a API pública DemoQA; em caso de instabilidades externas, os testes de API aceitam variações de status (200/201/204) e têm limpeza de usuário ao final do fluxo.
