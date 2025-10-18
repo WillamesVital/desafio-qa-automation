@@ -15,7 +15,13 @@ test.describe('Interactions > Sortable (List)', () => {
     });
 
     await test.step('When eu reordeno os itens para ordem crescente', async () => {
-      await sortable.shuffleList();
+      // Observação: Em alguns momentos a lista já carrega ordenada.
+      // O shuffle foi implementado como workaround (um bug foi documentado em docs/bugs/demoqa-sortable-preordered.md).
+      // Para tornar o comportamento explícito e evitar mascarar instabilidade, o shuffle é opcional via env SORTABLE_SHUFFLE.
+      // Ex.: $env:SORTABLE_SHUFFLE="1"; npx playwright test
+      if (process.env.SORTABLE_SHUFFLE === '1' || process.env.SORTABLE_SHUFFLE === 'true') {
+        await sortable.shuffleList();
+      }
       await sortable.sortListAscending();
     });
 

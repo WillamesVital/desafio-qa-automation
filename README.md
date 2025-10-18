@@ -209,6 +209,17 @@ Notas técnicas:
 - O POM tenta `locator.dragTo()` e, em caso de falha (ambientes sem suporte pleno de DnD), faz fallback com ações de mouse (`mouse.down/move/up`) baseadas em `boundingBox`.
 - Após cada movimentação, é aplicada uma pequena espera para o reflow da lista.
  - Implementamos `shuffleList()` com 2–3 movimentos determinísticos (ex.: mover `Six` → posição 0, `Four` → posição 2, `Two` → posição 4) para garantir que a lista fique fora de ordem antes de ordenar.
+ - Bug documentado: veja `docs/bugs/demoqa-sortable-preordered.md` (lista às vezes já carregada em ordem crescente; aplicamos shuffle antes de ordenar).
+
+Controle de workaround (shuffle) por variável de ambiente:
+- Por padrão, o teste não embaralha a lista. Para forçar o embaralhamento quando necessário:
+
+	PowerShell (Windows):
+	```powershell
+	$env:SORTABLE_SHUFFLE="1"; npx playwright test tests/web/interactions-sortable.spec.js --project=chromium
+	```
+
+- Quando desativado, se a página já carregar ordenada e o ambiente variar, o teste ainda valida a ordem mas pode não exercitar drag-and-drop. Em contrapartida, evita esconder instabilidades forçando movimentos desnecessários.
 
 ### Instabilidade conhecida: 502 Bad Gateway (DemoQA)
 
