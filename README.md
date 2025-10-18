@@ -173,6 +173,22 @@ Páginas usadas (POM):
 - `pages/HomePage.js` — acessa o site e abre a seção "Alerts, Frame & Windows"
 - `pages/Windows/BrowserWindowsPage.js` — abre a página Browser Windows e lida com a nova janela
 
+### Instabilidade conhecida: 502 Bad Gateway (DemoQA)
+
+Problema:
+- O site público da DemoQA pode responder com páginas de erro como "502 Bad Gateway" (nginx), de forma intermitente, especialmente em horários de pico.
+
+Como contornamos neste projeto:
+- Implementamos uma navegação resiliente via `helpers/webUtils.js`:
+	- `setupAdBlock(page)`: bloqueia domínios comuns de ads/trackers para reduzir interferências e overlays.
+	- `robustGoto(page, url, options)`: faz `goto` com retries e backoff para status 502/503/504, detecta o texto "502 Bad Gateway" no título/corpo e tenta recarregar antes de falhar.
+- Atualizamos as POMs para usar essas rotinas:
+	- `pages/HomePage.js` → `goto()` chama `setupAdBlock` + `robustGoto('https://demoqa.com/')`
+	- `pages/Windows/BrowserWindowsPage.js` → `goto()` usa `robustGoto('https://demoqa.com/browser-windows')`
+
+Observação importante:
+- Mesmo com retries e bloqueio de anúncios, por se tratar de um ambiente público e fora do controle, ainda pode haver instabilidade. Caso persistam falhas, é recomendável reexecutar os testes ou aumentar as tentativas/intervalos de `robustGoto`.
+
 ## Padrão de passos com test.step (Gherkin)
 
 Os testes adotam `test.step` do Playwright para descrever ações e expectativas em passos no estilo Gherkin (Given/When/Then/And). Benefícios:

@@ -1,3 +1,4 @@
+import { robustGoto } from '../../helpers/webUtils.js';
 export class BrowserWindowsPage {
   constructor(page) {
     this.page = page;
@@ -5,7 +6,7 @@ export class BrowserWindowsPage {
   }
 
   async goto() {
-    await this.page.goto('https://demoqa.com/browser-windows');
+    await robustGoto(this.page, 'https://demoqa.com/browser-windows');
   }
 
   async openNewWindow() {

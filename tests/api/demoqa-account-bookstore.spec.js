@@ -57,7 +57,6 @@ test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
   test('criar usuário', async () => {
     await test.step('Given que eu gere um username e password válidos', async () => {
       username = genUsername();
-      // Senha precisa cumprir política (letra maiúscula, minúscula, número e caractere especial, min 8)
       password = genValidPassword();
     });
 

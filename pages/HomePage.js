@@ -1,10 +1,12 @@
+import { setupAdBlock, robustGoto } from '../helpers/webUtils.js';
 export class HomePage {
   constructor(page) {
     this.page = page;
   }
 
   async goto() {
-    await this.page.goto('https://demoqa.com/');
+    await setupAdBlock(this.page);
+    await robustGoto(this.page, 'https://demoqa.com/');
   }
 
   async openForms() {
