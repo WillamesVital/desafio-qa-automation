@@ -2,13 +2,6 @@ import { test, expect, request as apiRequest } from '@playwright/test';
 import { AccountClient, BookStoreClient } from '../../helpers/apiClient.js';
 import { genUsername } from '../../helpers/dataFactory.js';
 
-/*
-Cenários negativos com observabilidade:
-- senha fraca -> 400 e mensagem
-- gerar token inválido -> 200 com status Failed
-- authorized usuário inexistente -> 200 (false) ou 404
-- adicionar ISBN inválido -> 400 com mensagem
-*/
 
 test.describe('DemoQA API - cenários negativos', () => {
   let apiCtx;

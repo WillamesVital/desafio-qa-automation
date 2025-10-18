@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test';
 import { HomePage } from '../../pages/HomePage.js';
 import { BrowserWindowsPage } from '../../pages/Windows/BrowserWindowsPage.js';
 
-// Cobertura: abrir Browser Windows, criar nova janela, validar texto e fechar
 
 test('Windows > Browser Windows - abrir nova janela e validar mensagem', async ({ page }) => {
   const home = new HomePage(page);

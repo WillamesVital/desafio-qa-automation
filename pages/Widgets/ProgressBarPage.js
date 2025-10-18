@@ -5,7 +5,7 @@ export class ProgressBarPage {
     this.page = page;
     this.startStopBtn = page.locator('#startStopButton');
     this.resetBtn = page.locator('#resetButton');
-    // O valor (aria-valuenow) está no elemento interno .progress-bar
+    
     this.progressBarContainer = page.locator('#progressBar');
     this.progressBarValueEl = page.locator('#progressBar .progress-bar');
   }
@@ -20,7 +20,6 @@ export class ProgressBarPage {
   }
 
   async stop() {
-    // O mesmo botão start/stop pausa quando em execução
     await this.startStopBtn.click();
   }
 
@@ -47,10 +46,9 @@ export class ProgressBarPage {
   }
 
   async getValueNow() {
-    // aria-valuenow é atualizado dinamicamente (0..100) no elemento interno
     const val = await this.progressBarValueEl.getAttribute('aria-valuenow');
     if (val != null) return Number(val);
-    const text = await this.progressBarValueEl.innerText().catch(() => '0'); // e.g., "6%"
+    const text = await this.progressBarValueEl.innerText().catch(() => '0');
     const num = parseInt((text || '0').replace(/[^0-9]/g, ''), 10);
     return Number.isFinite(num) ? num : 0;
   }

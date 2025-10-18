@@ -2,19 +2,6 @@ import { test, expect, request as apiRequest } from '@playwright/test';
 import { AccountClient, BookStoreClient } from '../../helpers/apiClient.js';
 import { genUsername, genValidPassword } from '../../helpers/dataFactory.js';
 
-/**
- * Fluxo coberto:
- * 1. Criar um usuário
- * 2. Gerar um token de acesso
- * 3. Verificar se o usuário está autorizado
- * 4. Listar livros disponíveis
- * 5. Alugar (adicionar) dois livros na coleção do usuário
- * 6. Listar detalhes do usuário e validar os livros
- *
- * Observação: a API do DemoQA não possui endpoint de "alugar" propriamente dito.
- * Utilizamos a coleção de livros do usuário (BookStore/Books) para adicionar livros ao usuário.
- */
-
 test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
   let userId;
   let username;
@@ -37,7 +24,7 @@ test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
   test.afterEach(async ({}, testInfo) => {
     if (testInfo.title === CLEANUP_TRIGGER_TEST && userId && token) {
       const del = await accountClient.deleteUser(userId, token);
-      // Aceita 200/204/202 conforme variação da API
+  
       if (![200, 202, 204].includes(del.status())) {
         await testInfo.attach('cleanup-delete-user-response.txt', {
           body: await del.text().catch(() => ''),
@@ -49,7 +36,6 @@ test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
   });
 
   test.afterAll(async () => {
-    // Fallback caso o teste final não tenha rodado
     if (userId && token) {
       try {
         await accountClient.deleteUser(userId, token);

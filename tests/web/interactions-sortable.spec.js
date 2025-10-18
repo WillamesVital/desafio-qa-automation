@@ -15,8 +15,7 @@ test.describe('Interactions > Sortable (List)', () => {
     });
 
     await test.step('When eu reordeno os itens para ordem crescente', async () => {
-      // embaralhar primeiro (se já estiver ordem correta, ainda validamos estabilidade)
-        await sortable.shuffleList();
+      await sortable.shuffleList();
       await sortable.sortListAscending();
     });
 

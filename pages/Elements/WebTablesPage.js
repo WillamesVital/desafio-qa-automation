@@ -21,7 +21,6 @@ export class WebTablesPage {
 
   async search(value) {
     await this.searchBox.fill(value);
-    // pequena espera para a tabela reagir ao filtro
     await this.page.waitForTimeout(150);
   }
 
@@ -31,7 +30,6 @@ export class WebTablesPage {
   }
 
   async fillAndSubmitForm(record) {
-    // record: { firstName, lastName, email, age, salary, department }
     const page = this.page;
     await page.fill('#firstName', record.firstName);
     await page.fill('#lastName', record.lastName);
@@ -45,7 +43,6 @@ export class WebTablesPage {
 
   async editRowByEmail(email, patch) {
     const page = this.page;
-    // Clicar no botão Edit correspondente
     const row = page.locator('.rt-tbody .rt-tr-group').filter({ hasText: email });
     await row.locator('[title="Edit"]').click();
     await this.modal.waitFor({ state: 'visible' });

@@ -12,7 +12,7 @@ export class SortablePage {
     await setupAdBlock(this.page);
     await robustGoto(this.page, 'https://demoqa.com/sortable');
     await this.listTab.waitFor({ state: 'visible' });
-    // aguardar itens renderizados
+
     await this.listItems.first().waitFor({ state: 'visible' });
   }
 
@@ -30,7 +30,6 @@ export class SortablePage {
   async moveLabelToIndex(label, index) {
     const item = this.page.locator('#demo-tabpane-list .vertical-list-container .list-group-item', { hasText: label }).first();
     const targetPos = this.page.locator('#demo-tabpane-list .vertical-list-container .list-group-item').nth(index);
-    // drag and drop direto (se suportado)
     try {
       await item.dragTo(targetPos, { force: true });
     } catch {
@@ -49,33 +48,25 @@ export class SortablePage {
 
   async shuffleList() {
     await this.ensureListTab();
-    // Realiza 3 movimentos determinísticos para bagunçar a ordem inicial One..Six
-    // 1) Levar 'Six' para o início
     await this.moveLabelToIndex('Six', 0);
-    // 2) Levar 'Four' para a posição 2
     await this.moveLabelToIndex('Four', 2);
-    // 3) Levar 'Two' para a posição 4
     await this.moveLabelToIndex('Two', 4);
   }
 
   async sortListAscending() {
     await this.ensureListTab();
-    // Estratégia: pegar a lista atual e reordenar para One..Six usando drag & drop sucessivo.
     const targetOrder = ['One', 'Two', 'Three', 'Four', 'Five', 'Six'];
     for (let i = 0; i < targetOrder.length; i++) {
       const label = targetOrder[i];
       const item = this.page.locator('#demo-tabpane-list .vertical-list-container .list-group-item', { hasText: label }).first();
       const targetPos = this.page.locator('#demo-tabpane-list .vertical-list-container .list-group-item').nth(i);
 
-      // Se já está na posição correta, segue
       const currentTexts = (await this.getListTexts()).map(t => t.trim());
       if (currentTexts[i] === label) continue;
 
-      // drag and drop direto (se suportado)
       try {
         await item.dragTo(targetPos, { force: true });
       } catch {
-        // fallback: arrastar por mouse ações (mover alguns pixels acima do target)
         const boxFrom = await item.boundingBox();
         const boxTo = await targetPos.boundingBox();
         if (boxFrom && boxTo) {
@@ -85,7 +76,6 @@ export class SortablePage {
           await this.page.mouse.up();
         }
       }
-      // pequena espera para reflow
       await this.page.waitForTimeout(150);
     }
   }

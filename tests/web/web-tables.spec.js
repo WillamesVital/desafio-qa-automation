@@ -29,7 +29,6 @@ test.describe('Elements > Web Tables', () => {
       await tables.goto();
     });
 
-    // Criar
     const record = makeRecord();
     await test.step('When crio um novo registro', async () => {
       await tables.openAddModal();
@@ -42,7 +41,6 @@ test.describe('Elements > Web Tables', () => {
       await tables.clearSearch();
     });
 
-    // Editar
     const patch = { lastName: 'Edited', salary: 9000 };
     await test.step('And edito o registro criado', async () => {
       await tables.editRowByEmail(record.email, patch);
@@ -56,7 +54,6 @@ test.describe('Elements > Web Tables', () => {
       await tables.clearSearch();
     });
 
-    // Deletar
     await test.step('And deleto o registro criado', async () => {
       await tables.search(record.email);
       await tables.deleteRowByEmail(record.email);
@@ -64,7 +61,6 @@ test.describe('Elements > Web Tables', () => {
     });
 
     await test.step('Then o registro não deve mais existir', async () => {
-      // Pequeno wait para a remoção refletir no DOM
       await page.waitForTimeout(200);
       await tables.search(record.email);
       await expect(await tables.rowExistsByEmail(record.email)).toBeFalsy();
