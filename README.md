@@ -83,6 +83,38 @@ npm run test:report
 - Swagger DemoQA: https://demoqa.com/swagger/#/
 - Documentação Playwright: https://playwright.dev/docs/intro
 
+## CI no GitHub (GitHub Actions)
+
+Arquivo do workflow: `.github/workflows/playwright.yml`
+
+Eventos que disparam:
+- push e pull_request para os branches `main` e `master`.
+
+Jobs configurados:
+- API Tests
+	- Instala dependências e browsers do Playwright.
+	- Executa apenas o projeto de API: `npx playwright test --project=api`.
+	- Publica o relatório como artefato: `playwright-report-api`.
+
+- Web Tests
+	- Depende do job de API (executa depois que o API Tests concluir com sucesso).
+	- Instala dependências e browsers do Playwright.
+	- Executa os projetos de navegador: `chromium`, `firefox`, `webkit`.
+	- Publica o relatório como artefato: `playwright-report-web`.
+
+Como reproduzir localmente os mesmos comandos do CI:
+- Somente API:
+	- `npx playwright test --project=api`
+- Somente Web (todos navegadores):
+	- `npx playwright test --project=chromium --project=firefox --project=webkit`
+- Abrir relatório local após uma execução:
+	- `npx playwright show-report`
+
+Notas e melhorias possíveis:
+- É possível paralelizar totalmente removendo a dependência do job Web sobre o API (`needs: api-tests`), caso deseje executar ambos em paralelo.
+- Se necessário, você pode adicionar cache de `node_modules`/Playwright com `actions/cache` para acelerar as execuções.
+- Os testes utilizam a API pública DemoQA; em caso de instabilidades externas, os testes de API aceitam variações de status (200/201/204) e têm limpeza de usuário ao final do fluxo.
+
 ## Testes Web – Practice Form (DemoQA)
 
 Arquivo: `tests/web/practice-form.spec.js`
