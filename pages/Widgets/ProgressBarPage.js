@@ -26,6 +26,24 @@ export class ProgressBarPage {
 
   async reset() {
     await this.resetBtn.click();
+    // aguarda voltar a 0 (algumas vezes pode ficar em 1% por um instante)
+    try {
+      await this.page.waitForFunction(() => {
+        const el = document.querySelector('#progressBar .progress-bar');
+        if (!el) return false;
+        const v = Number(el.getAttribute('aria-valuenow') || '0');
+        return v === 0;
+      }, null, { timeout: 3000 });
+    } catch {
+      // tentativa extra de reset e nova espera curta
+      await this.resetBtn.click();
+      await this.page.waitForFunction(() => {
+        const el = document.querySelector('#progressBar .progress-bar');
+        if (!el) return false;
+        const v = Number(el.getAttribute('aria-valuenow') || '0');
+        return v === 0;
+      }, null, { timeout: 2000 }).catch(() => {});
+    }
   }
 
   async getValueNow() {

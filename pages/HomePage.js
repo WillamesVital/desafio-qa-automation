@@ -24,4 +24,8 @@ export class HomePage {
   async openWidgets() {
     await this.page.locator('div.card.mt-4.top-card:has-text("Widgets")').click();
   }
+
+  async openInteractions() {
+    await this.page.locator('div.card.mt-4.top-card:has-text("Interactions")').click();
+  }
 }

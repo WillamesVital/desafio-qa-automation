@@ -44,6 +44,7 @@ npm run test:report
 		- `browser-windows.spec.js`: Abrir página "Browser Windows", clicar em "New Window", validar o texto "This is a sample page" na nova janela e fechá-la.
 		- `web-tables.spec.js`: Fluxo de Web Tables (criar, editar e deletar registro) e bônus de criar 12 registros dinamicamente e deletá-los.
 		- `widgets-progress-bar.spec.js`: Fluxo de Widgets > Progress Bar (iniciar, parar ≤25%, completar e resetar).
+		- `interactions-sortable.spec.js`: Fluxo de Interactions > Sortable (List) para ordenar itens em ordem crescente.
 	- `api/`
 		- `demoqa-account-bookstore.spec.js`: Teste de API end-to-end que cobre o fluxo na DemoQA:
 			1) Criar usuário (`POST /Account/v1/User`)
@@ -75,6 +76,8 @@ npm run test:report
 			- `submit(options)` — valida completude e clica em Submit.
 			- `isPopupVisible()` — aguarda a abertura do modal de confirmação.
 			- `closePopup()` — fecha o modal com tratamento para overlays/ads.
+		- `Interactions/SortablePage.js`: POM do Sortable (`/sortable`).
+			- Métodos: `goto()`, `ensureListTab()`, `getListTexts()`, `sortListAscending()` com drag-and-drop resiliente (usa `dragTo` e fallback de mouse com `boundingBox`).
 
 ## Notas sobre o fluxo de API (DemoQA)
 
@@ -86,38 +89,6 @@ npm run test:report
 
 - Swagger DemoQA: https://demoqa.com/swagger/#/
 - Documentação Playwright: https://playwright.dev/docs/intro
-
-## CI no GitHub (GitHub Actions)
-
-Arquivo do workflow: `.github/workflows/playwright.yml`
-
-Eventos que disparam:
-- push e pull_request para os branches `main` e `master`.
-
-Jobs configurados:
-- API Tests
-	- Instala dependências e browsers do Playwright.
-	- Executa apenas o projeto de API: `npx playwright test --project=api`.
-	- Publica o relatório como artefato: `playwright-report-api`.
-
-- Web Tests
-	- Depende do job de API (executa depois que o API Tests concluir com sucesso).
-	- Instala dependências e browsers do Playwright.
-	- Executa os projetos de navegador: `chromium`, `firefox`, `webkit`.
-	- Publica o relatório como artefato: `playwright-report-web`.
-
-Como reproduzir localmente os mesmos comandos do CI:
-- Somente API:
-	- `npx playwright test --project=api`
-- Somente Web (todos navegadores):
-	- `npx playwright test --project=chromium --project=firefox --project=webkit`
-- Abrir relatório local após uma execução:
-	- `npx playwright show-report`
-
-Notas e melhorias possíveis:
-- É possível paralelizar totalmente removendo a dependência do job Web sobre o API (`needs: api-tests`), caso deseje executar ambos em paralelo.
-- Se necessário, você pode adicionar cache de `node_modules`/Playwright com `actions/cache` para acelerar as execuções.
-- Os testes utilizam a API pública DemoQA; em caso de instabilidades externas, os testes de API aceitam variações de status (200/201/204) e têm limpeza de usuário ao final do fluxo.
 
 ## Testes Web – Practice Form (DemoQA)
 
@@ -218,6 +189,27 @@ Notas técnicas:
 - Para reduzir flakiness, o teste aguarda o valor atingir pelo menos 10% antes de pausar, garantindo que a verificação `≤ 25%` seja consistente.
 - Navegação resiliente (`robustGoto`) e bloqueio de anúncios (`setupAdBlock`) ajudam a mitigar instabilidades do site público.
 
+## Testes Web – Interactions > Sortable (DemoQA)
+
+Arquivo: `tests/web/interactions-sortable.spec.js`
+
+Fluxo coberto:
+- Acessar https://demoqa.com/
+- Entrar em "Interactions"
+- Abrir "Sortable" (https://demoqa.com/sortable) e garantir a aba "List" ativa
+- Em alguns ambientes, os itens já aparecem na ordem correta por padrão; para validar o comportamento de ordenação, primeiro embaralhamos a lista e só então reordenamos
+- Reordenar os itens para a ordem crescente: One, Two, Three, Four, Five, Six
+- Validar a ordem final
+
+Páginas usadas (POM):
+- `pages/HomePage.js` — acessa o site e abre a seção "Interactions"
+- `pages/Interactions/SortablePage.js` — navega ao Sortable, lê itens e reordena com drag-and-drop
+
+Notas técnicas:
+- O POM tenta `locator.dragTo()` e, em caso de falha (ambientes sem suporte pleno de DnD), faz fallback com ações de mouse (`mouse.down/move/up`) baseadas em `boundingBox`.
+- Após cada movimentação, é aplicada uma pequena espera para o reflow da lista.
+ - Implementamos `shuffleList()` com 2–3 movimentos determinísticos (ex.: mover `Six` → posição 0, `Four` → posição 2, `Two` → posição 4) para garantir que a lista fique fora de ordem antes de ordenar.
+
 ### Instabilidade conhecida: 502 Bad Gateway (DemoQA)
 
 Problema:
@@ -294,3 +286,35 @@ Uso no projeto:
 - `tests/web/practice-form.spec.js`: passos Gherkin para navegação, preenchimento, workaround (zoom/viewport), submit, verificação e fechamento do popup.
 - `tests/web/browser-windows.spec.js`: passos Gherkin para navegação, abertura de nova janela, validação de texto e fechamento.
 - `tests/api/demoqa-account-bookstore.spec.js`: passos Gherkin cobrindo criação de usuário, geração de token, autorização, listagem e adição de livros, e verificação final do usuário.
+
+## CI no GitHub (GitHub Actions)
+
+Arquivo do workflow: `.github/workflows/playwright.yml`
+
+Eventos que disparam:
+- push e pull_request para os branches `main` e `master`.
+
+Jobs configurados:
+- API Tests
+	- Instala dependências e browsers do Playwright.
+	- Executa apenas o projeto de API: `npx playwright test --project=api`.
+	- Publica o relatório como artefato: `playwright-report-api`.
+
+- Web Tests
+	- Depende do job de API (executa depois que o API Tests concluir com sucesso).
+	- Instala dependências e browsers do Playwright.
+	- Executa os projetos de navegador: `chromium`, `firefox`, `webkit`.
+	- Publica o relatório como artefato: `playwright-report-web`.
+
+Como reproduzir localmente os mesmos comandos do CI:
+- Somente API:
+	- `npx playwright test --project=api`
+- Somente Web (todos navegadores):
+	- `npx playwright test --project=chromium --project=firefox --project=webkit`
+- Abrir relatório local após uma execução:
+	- `npx playwright show-report`
+
+Notas e melhorias possíveis:
+- É possível paralelizar totalmente removendo a dependência do job Web sobre o API (`needs: api-tests`), caso deseje executar ambos em paralelo.
+- Se necessário, você pode adicionar cache de `node_modules`/Playwright com `actions/cache` para acelerar as execuções.
+- Os testes utilizam a API pública DemoQA; em caso de instabilidades externas, os testes de API aceitam variações de status (200/201/204) e têm limpeza de usuário ao final do fluxo.
