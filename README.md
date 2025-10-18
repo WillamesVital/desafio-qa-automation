@@ -287,6 +287,23 @@ Uso no projeto:
 - `tests/web/browser-windows.spec.js`: passos Gherkin para navegação, abertura de nova janela, validação de texto e fechamento.
 - `tests/api/demoqa-account-bookstore.spec.js`: passos Gherkin cobrindo criação de usuário, geração de token, autorização, listagem e adição de livros, e verificação final do usuário.
 
+## Por que não usei Cucumber neste projeto
+
+Contexto:
+- O desafio menciona que o uso de Cucumber/BDD seria um diferencial, não obrigatório.
+
+Decisão:
+- Optei por usar Playwright Test com `test.step` (estilo Given/When/Then) para obter legibilidade semelhante ao BDD, com menor complexidade operacional.
+
+Motivos práticos que fazem o cucumber hoje estar cada vez menos usado:
+- Reduzir overhead de manutenção: evitar duplicidade entre arquivos `.feature` e os step definitions.
+- Melhor DevX/diagnóstico: aproveitar nativamente traces, screenshots, vídeos e parallelismo do Playwright Test.
+- Linguagem de domínio nos próprios steps e POMs, mantendo clareza sem a camada adicional do Cucumber.
+
+Quando eu adotaria Cucumber aqui:
+- Se stakeholders não técnicos fossem coautores/revisores dos `.feature` (ex.: UAT, governança/regulatório) e houvesse compromisso de manutenção.
+- Se fosse necessário compartilhar a mesma especificação executável entre múltiplos adaptadores (ex.: web + mobile) com linguagem de domínio única.
+
 ## CI no GitHub (GitHub Actions)
 
 Arquivo do workflow: `.github/workflows/playwright.yml`
