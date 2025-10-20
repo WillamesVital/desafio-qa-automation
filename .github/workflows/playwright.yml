@@ -16,6 +16,20 @@ jobs:
           node-version: lts/*
       - name: Install dependencies
         run: npm ci
+
+      # Security audit como aviso + relatório JSON
+      - name: Security audit (npm) — JSON report
+        continue-on-error: true
+        run: |
+          npm audit --audit-level=moderate --json > audit-report.json || echo "npm audit returned non-zero"
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report-api
+          path: audit-report.json
+          retention-days: 30
+
       - name: Install Playwright (API only needs deps for request, but install browsers for parity)
         run: npx playwright install --with-deps
       - name: Run Playwright API tests
@@ -29,7 +43,6 @@ jobs:
 
   web-tests:
     name: Web Tests
-    needs: api-tests
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
@@ -39,6 +52,20 @@ jobs:
           node-version: lts/*
       - name: Install dependencies
         run: npm ci
+
+      # Security audit como aviso + relatório JSON
+      - name: Security audit (npm) — JSON report
+        continue-on-error: true
+        run: |
+          npm audit --audit-level=moderate --json > audit-report.json || echo "npm audit returned non-zero"
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report-web
+          path: audit-report.json
+          retention-days: 30
+
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Run Playwright Web tests

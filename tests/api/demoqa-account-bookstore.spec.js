@@ -44,63 +44,79 @@ test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
     await apiCtx.dispose();
   });
 
-  test('criar usuário', async () => {
+  test('criar usuário', async ({}, testInfo) => {
+    let resCreate;
     await test.step('Given que eu gere um username e password válidos', async () => {
       username = genUsername();
       password = genValidPassword();
     });
 
     await test.step('When eu requisito a criação do usuário', async () => {
-      const res = await accountClient.createUser({ userName: username, password });
-      const status = res.status();
+      resCreate = await accountClient.createUser({ userName: username, password });
+    });
+
+    await test.step('Then o usuário deve ser criado com sucesso (201)', async () => {
+      const status = resCreate.status();
       if (status !== 201) {
-        await testInfo.attach('create-user-response.txt', { body: await res.text(), contentType: 'text/plain' });
+        await testInfo.attach('create-user-response.txt', { body: await resCreate.text(), contentType: 'text/plain' });
       }
-      expect(status, await res.text()).toBe(201);
-      const body = await res.json();
+      expect(status, await resCreate.text()).toBe(201);
+      const body = await resCreate.json();
       expect(body.username).toBe(username);
       expect(body.userID).toMatch(/[0-9a-fA-F-]{36}/);
       userId = body.userID;
     });
   });
 
-  test('gerar token', async () => {
+  test('gerar token', async ({}, testInfo) => {
+    let resToken;
     await test.step('When eu gero um token para o usuário criado', async () => {
-      const res = await accountClient.generateToken({ userName: username, password });
-      const status = res.status();
+      resToken = await accountClient.generateToken({ userName: username, password });
+    });
+
+    await test.step('Then devo receber 200 e um token válido', async () => {
+      const status = resToken.status();
       if (status !== 200) {
-        await testInfo.attach('generate-token-response.txt', { body: await res.text(), contentType: 'text/plain' });
+        await testInfo.attach('generate-token-response.txt', { body: await resToken.text(), contentType: 'text/plain' });
       }
-      expect(status, await res.text()).toBe(200);
-      const body = await res.json();
+      expect(status, await resToken.text()).toBe(200);
+      const body = await resToken.json();
       expect(body.status).toBe('Success');
       expect(body.token).toBeTruthy();
       token = body.token;
     });
   });
 
-  test('confirmar usuário autorizado', async () => {
+  test('confirmar usuário autorizado', async ({}, testInfo) => {
+    let resAuth;
+    await test.step('When verifico a autorização do usuário', async () => {
+      resAuth = await accountClient.isAuthorized({ userName: username, password });
+    });
+
     await test.step('Then o usuário deve estar autorizado', async () => {
-      const res = await accountClient.isAuthorized({ userName: username, password });
-      const status = res.status();
+      const status = resAuth.status();
       if (status !== 200) {
-        await testInfo.attach('authorized-response.txt', { body: await res.text(), contentType: 'text/plain' });
+        await testInfo.attach('authorized-response.txt', { body: await resAuth.text(), contentType: 'text/plain' });
       }
-      expect(status, await res.text()).toBe(200);
-      const isAuthorized = await res.json();
+      expect(status, await resAuth.text()).toBe(200);
+      const isAuthorized = await resAuth.json();
       expect(isAuthorized).toBe(true);
     });
   });
 
-  test('listar livros disponíveis', async () => {
+  test('listar livros disponíveis', async ({}, testInfo) => {
+    let resList;
     await test.step('When eu listo os livros disponíveis', async () => {
-      const res = await bookClient.listBooks();
-      const status = res.status();
+      resList = await bookClient.listBooks();
+    });
+
+    await test.step('Then devo receber 200 e pelo menos 2 livros', async () => {
+      const status = resList.status();
       if (status !== 200) {
-        await testInfo.attach('list-books-response.txt', { body: await res.text(), contentType: 'text/plain' });
+        await testInfo.attach('list-books-response.txt', { body: await resList.text(), contentType: 'text/plain' });
       }
-      expect(status, await res.text()).toBe(200);
-      const body = await res.json();
+      expect(status, await resList.text()).toBe(200);
+      const body = await resList.json();
       expect(Array.isArray(body.books)).toBe(true);
       expect(body.books.length).toBeGreaterThanOrEqual(2);
 
@@ -110,35 +126,40 @@ test.describe.serial('DemoQA - fluxo de usuário e livros (API)', () => {
     });
   });
 
-  test('adicionar dois livros ao usuário', async () => {
-    await test.step('And eu adiciono dois livros à coleção do usuário', async () => {
-      const res = await bookClient.addBooks(
+  test('adicionar dois livros ao usuário', async ({}, testInfo) => {
+    let resAdd;
+    await test.step('When eu adiciono dois livros à coleção do usuário', async () => {
+      resAdd = await bookClient.addBooks(
         userId,
         token,
         availableBooks.map(b => ({ isbn: b.isbn }))
       );
+    });
 
-      const status = res.status();
+    await test.step('Then a resposta deve indicar adição bem-sucedida (200/201)', async () => {
+      const status = resAdd.status();
       if (![200, 201].includes(status)) {
-        await testInfo.attach('add-books-response.txt', { body: await res.text(), contentType: 'text/plain' });
+        await testInfo.attach('add-books-response.txt', { body: await resAdd.text(), contentType: 'text/plain' });
       }
       expect([200, 201]).toContain(status);
-      const body = await res.json();
-      // Quando já existem, a API pode retornar uma lista dos livros ou mensagem de conflito;
-      // validei que não é erro 401/403/400 e segui a verificação final no GET do usuário.
-      expect(res.status()).not.toBeGreaterThan(400);
+      // Quando já existem, a API pode variar o corpo; verificação final será no GET do usuário.
+      expect(status).not.toBeGreaterThan(400);
     });
   });
 
-  test('detalhar usuário com livros escolhidos', async () => {
+  test('detalhar usuário com livros escolhidos', async ({}, testInfo) => {
+    let resUser;
+    await test.step('When eu consulto os detalhes do usuário', async () => {
+      resUser = await accountClient.getUser(userId, token);
+    });
+
     await test.step('Then os detalhes do usuário devem conter os livros adicionados', async () => {
-      const res = await accountClient.getUser(userId, token);
-      const status = res.status();
+      const status = resUser.status();
       if (status !== 200) {
-        await testInfo.attach('get-user-response.txt', { body: await res.text(), contentType: 'text/plain' });
+        await testInfo.attach('get-user-response.txt', { body: await resUser.text(), contentType: 'text/plain' });
       }
-      expect(status, await res.text()).toBe(200);
-      const body = await res.json();
+      expect(status, await resUser.text()).toBe(200);
+      const body = await resUser.json();
 
       expect(body.username).toBe(username);
       expect(Array.isArray(body.books)).toBe(true);
