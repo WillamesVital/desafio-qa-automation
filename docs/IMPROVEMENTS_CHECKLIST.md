@@ -5,7 +5,7 @@ This checklist contains actionable improvements prioritized by effort and impact
 ## 🚀 High Priority (Quick Wins)
 
 ### Security & Quality
-- [ ] **Add npm audit to CI** (5 min)
+- [x] **Add npm audit to CI** (5 min)
   ```yaml
   # .github/workflows/playwright.yml
   - name: Security audit
@@ -90,7 +90,7 @@ This checklist contains actionable improvements prioritized by effort and impact
   ```
 
 ### CI/CD
-- [ ] **Parallelize CI jobs** (15 min)
+- [x] **Parallelize CI jobs** (15 min)
   - Remove `needs: api-tests` from web-tests job
   - Let both jobs run in parallel
   
@@ -335,5 +335,5 @@ _This section will be updated as improvements are implemented_
 
 ---
 
-**Last Updated:** October 18, 2025  
+**Last Updated:** October 20, 2025  
 **Maintained By:** Development Team

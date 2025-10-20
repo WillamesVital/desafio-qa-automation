@@ -322,17 +322,18 @@ Arquivo do workflow: `.github/workflows/playwright.yml`
 Eventos que disparam:
 - push e pull_request para os branches `main` e `master`.
 
-Jobs configurados:
+Jobs configurados (executam em paralelo):
 - API Tests
 	- Instala dependências e browsers do Playwright.
 	- Executa apenas o projeto de API: `npx playwright test --project=api`.
-	- Publica o relatório como artefato: `playwright-report-api`.
+	- Security audit (npm): `npm audit --audit-level=moderate`, tratado como aviso (continue-on-error) e com relatório JSON publicado como artefato (`npm-audit-report-api`).
+	- Publica o relatório HTML do Playwright como artefato: `playwright-report-api`.
 
 - Web Tests
-	- Depende do job de API (executa depois que o API Tests concluir com sucesso).
 	- Instala dependências e browsers do Playwright.
 	- Executa os projetos de navegador: `chromium`, `firefox`, `webkit`.
-	- Publica o relatório como artefato: `playwright-report-web`.
+	- Security audit (npm): `npm audit --audit-level=moderate`, tratado como aviso (continue-on-error) e com relatório JSON publicado como artefato (`npm-audit-report-web`).
+	- Publica o relatório HTML do Playwright como artefato: `playwright-report-web`.
 
 Como reproduzir localmente os mesmos comandos do CI:
 - Somente API:
